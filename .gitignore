@@ -1,3 +1,4 @@
+node_modules/
 .c9revisions/
 .c9revisions/*.*
 # Ignore configuration files that may contain sensitive information.
