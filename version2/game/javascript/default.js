@@ -116,8 +116,10 @@ $( function( ) {
 					// Render Graphics DOM Ready
 $(function( ){
 	window.ontouchmove = function(){ event.preventDefault(); }; 		// No overscrolling on Touch Devices
+
+
 	var camera, scene, renderer;						// Declare Camera Variables in empty f() global scope
-	var block, blockGeometry, blockMaterial, blockPosition;			// Declare block Variables in empty f() global scope
+	var plane, block, blockGeometry, blockMaterial, blockPosition;			// Declare block Variables in empty f() global scope
 
 	var touch = {
 		x: null,
@@ -138,50 +140,50 @@ $(function( ){
 		var startPos 	= { 						// Set Camera Position
 			z: 1000
 		};
-		var blockDim 	= {						// Set block Dimentions
+		var blockSize 	= {						// Set block Dimentions
 			x: $( window ).width( )/4,
-			y: $( window ).height( )/4,
-			z: $( window ).width( )/4
-		};
-		var blockMaterialSettings = {					// Set block Material settings
-			color: 0xcccccc,
-			wireframe: false
+			y: 10,  // $( window ).height( )/4,
+			z: 10,  // $( window ).width( )/8
 		};
 
-		var lightSettings = {
-			x: -600,
-			y: 0,
-			z: 450,
-			color: 0xFF0000,
-			intensity: 1.5
+		// Object Settings
+
+		var shapes = {
+			sphere: new THREE.SphereGeometry( $( window ).width( )/4, 8, 8 )
+		}
+		
+		var colors = {
+			white: 0xFFFFFF,
+			black: 0x000000,
+			red: 0xFF0000,
+			green: 0x00FF00,
+			blue: 0x0000FF
+		}
+		
+		var textures = {
+			blank: new THREE.MeshLambertMaterial( { color: colors.white, shading: THREE.SmoothShading, wireframe: false } ),
+			earth: new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'textures/earth.jpg' ) } )			
 		};
+		
+		// Scene Objects
 
-		var pointLightSettings = {
-			x: 600,
-			y: 0,
-			z: 450,
-			color: 0x0000ff,
-			intensity: 0.5
-		};
-
-		var light = new THREE.PointLight( lightSettings.color );
-		light.position.x = lightSettings.x;
-		light.position.y = lightSettings.y;
-		light.position.z = lightSettings.z;
-		light.intensity = lightSettings.intensity;
-
-		var pointLight = new THREE.PointLight( pointLightSettings.color );
-		pointLight.position.x = pointLightSettings.x;
-		pointLight.position.y = pointLightSettings.y;
-		pointLight.position.z = pointLightSettings.z;
-		pointLight.intensity = pointLightSettings.intensity;
-
+		var light = new THREE.PointLight( colors.red );
+		light.position.x = -600;
+		light.position.y = 0;
+		light.position.z = 450;
+		light.intensity = 1;
+		
+		var pointLight = new THREE.PointLight( colors.blue );
+		pointLight.position.x = 600;
+		pointLight.position.y = 0;
+		pointLight.position.z = 450;
+		pointLight.intensity = 1;
+		
 		camera = new THREE.PerspectiveCamera( cameraFieldOfView, aspectRatio, near, far );	// Create a new Camera,
 		camera.position.z = startPos.z;								// Set camera z position
-
-		blockGeometry 	= new THREE.CubeGeometry( blockDim.x, blockDim.y, blockDim.z );		// Set block Geometry using block Dimentions
-		blockMaterial   = new THREE.MeshBasicMaterial( { envMap: THREE.ImageUtils.loadTexture( './textures/earth.jpg', new THREE.SphericalReflectionMapping() ), overdraw: true } ) );
-		block 		= new THREE.Mesh( blockGeometry, blockMaterial );				// Create block Mesh
+		
+		blockGeometry 	= new THREE.SphereGeometry( blockSize.x, blockSize.y, blockSize.z );		// Set block Geometry using block Dimentions
+		block 		= new THREE.Mesh( shapes.sphere, textures.blank );
 
 		scene = new THREE.Scene( );								// Create a new Scene
 		scene.add( block );									// Add block to the new Scene
@@ -193,6 +195,15 @@ $(function( ){
 		rendererContainer = $( '<div />' ).attr( 'id', 'renderer' )				// Create the renderer DOM object
 			.append( renderer.domElement )							// Add the Renderer to the Renderer DOM object
 			.appendTo( $( 'body') );							// Add the Renderer DOM element to the Body
+
+
+
+		$( window ).resize( function( ){         
+    			camera.aspect = window.innerWidth / window.innerHeight;
+   			camera.updateProjectionMatrix();
+    
+    			renderer.setSize( window.innerWidth, window.innerHeight );
+		} );
 
 		return true;										// Return true
 	}
