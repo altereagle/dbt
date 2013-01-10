@@ -180,7 +180,7 @@ $(function( ){
 		camera.position.z = startPos.z;								// Set camera z position
 
 		blockGeometry 	= new THREE.CubeGeometry( blockDim.x, blockDim.y, blockDim.z );		// Set block Geometry using block Dimentions
-		blockMaterial 	= new THREE.MeshLambertMaterial( blockMaterialSettings );		// Set block Material using block Material settings
+		blockMaterial   = new THREE.MeshBasicMaterial( { envMap: THREE.ImageUtils.loadTexture( './textures/earth.jpg', new THREE.SphericalReflectionMapping() ), overdraw: true } ) );
 		block 		= new THREE.Mesh( blockGeometry, blockMaterial );				// Create block Mesh
 
 		scene = new THREE.Scene( );								// Create a new Scene
