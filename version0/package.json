@@ -1,0 +1,22 @@
+{
+  "name": "dbt",
+  "version": "0.0.0",
+  "description": "Bomberman meets Scortched Earth",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "connect": "*",
+    "socket.io": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/altereagle/dbt.git"
+  },
+  "keywords": [
+    "game"
+  ],
+  "author": "Kendell and Kep",
+  "license": "BSD"
+}

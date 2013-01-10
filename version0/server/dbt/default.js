@@ -1,0 +1,3 @@
+exports.settings = {
+    gamestart: false
+};

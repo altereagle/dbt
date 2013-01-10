@@ -1,0 +1,17 @@
+{
+  "name": "deathbytank",
+  "version": "0.0.0",
+  "description": "ERROR: No README.md file found!",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies":{
+    "connect": "*",
+    "socket.io": "*"
+  },
+  "repository": "",
+  "author": "Kendell and Kep",
+  "license": "BSD"
+}

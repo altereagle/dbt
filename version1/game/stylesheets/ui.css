@@ -1,0 +1,43 @@
+.ui {
+	z-index: 999;
+	position: fixed;
+}
+
+#pingMessage {
+	z-index: 999;
+	position: fixed;
+	color: #0f0;
+	font-size: 1em;
+	height: 30px;
+	padding: 1%;
+	bottom: 50px;
+	left: 5%;
+}
+
+#playerName {
+	top: 10px;
+	right: 10px;
+	color: #0f0;
+}
+#playerCount {
+	top: 10px;
+	left: 10px;
+	color: #0f0;
+}
+
+#pingBox {
+	bottom: 10px;
+	left: 5%;
+	height: 40px;
+	padding: 1%;
+	width: 90%;
+
+	font-family: 'eightbit';
+	font-size: 1em;
+
+	opacity: .9;
+	color: #0f0;
+	background-color: #000;
+	border: 0px;
+	border-radius: 0;
+}

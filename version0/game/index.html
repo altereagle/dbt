@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link href="styles/standard/main.css" type="text/css" rel="stylesheet">
+        <link href="styles/standard/tanks.css" type="text/css" rel="stylesheet">
+        <script src="http://dbt.kendell.c9.io/socket.io/socket.io.js"></script>
+        <script src="engine/thirdParty/jquery.js"></script>
+        <script src="engine/thirdParty/jcanvas.js"></script>
+        <script src="engine/thirdParty/modernizr.js"></script>
+        <script src="engine/standard/detectMobile.js"></script>
+        <script>
+            $(function(){
+                var Default = {
+                    team: "red",
+                    name: "Fodder"
+                };
+                var client = io.connect('http://dbt.kendell.c9.io/');
+                
+                var Player = function(options){
+                    var team = (options !== undefined && options.team !== undefined) ? options.team : Default.team;
+                    var name = (options !== undefined && options.name !== undefined) ? options.name : Default.name;
+                    var player = $('<div />')
+                        .attr('id', 'player_' + name)
+                        .addClass('Player', 'team_' + team)
+                        .appendTo($('body'));
+                    return player;
+                };
+                
+                client.on('entrance',function(data){
+                    var player = Player();
+                    
+                    player.animate({
+                        left:(parseInt(player.css('left'), 10) + 100) + "px"
+                    });
+                    console.log(data.message);
+                    
+                });
+            
+            });
+        </script>
+        <title>Death by Tank - Beta</title>
+    </head>
+    <body> </body>
+</html>
