@@ -1,6 +1,7 @@
 .ui {
 	z-index: 999;
 	position: fixed;
+	padding: 5px;
 }
 
 #pingMessage {
@@ -9,7 +10,6 @@
 	color: #0f0;
 	font-size: 1em;
 	height: 30px;
-	padding: 1%;
 	bottom: 50px;
 	left: 5%;
 }
@@ -18,18 +18,19 @@
 	top: 10px;
 	right: 10px;
 	color: #0f0;
+	background-color: #000;
 }
 #clientCount {
 	top: 10px;
 	left: 10px;
 	color: #0f0;
+	background-color: #000;
 }
 
 #pingBox {
 	bottom: 10px;
 	left: 5%;
 	height: 40px;
-	padding: 1%;
 	width: 90%;
 
 	font-family: 'eightbit';

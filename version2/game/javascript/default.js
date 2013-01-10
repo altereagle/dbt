@@ -119,7 +119,7 @@ $(function( ){
 
 
 	var camera, scene, renderer, projector;						// Declare Camera Variables in empty f() global scope
-	var plane, block, blockGeometry, blockMaterial, blockPosition;			// Declare block Variables in empty f() global scope
+	var plane, block;			// Declare block Variables in empty f() global scope
 
 	var touch = {
 		x: null,
@@ -140,16 +140,11 @@ $(function( ){
 		var startPos 	= { 						// Set Camera Position
 			z: 1000
 		};
-		var blockSize 	= {						// Set block Dimentions
-			x: $( window ).width( )/4,
-			y: 10,  // $( window ).height( )/4,
-			z: 10,  // $( window ).width( )/8
-		};
 
 		// Object Settings
 
 		var shapes = {
-			sphere: new THREE.SphereGeometry( $( window ).width( )/4, 8, 8 ),
+			sphere: new THREE.SphereGeometry( $( window ).width( )/8, 8, 8 ),
 			cube: new THREE.CubeGeometry( $( window ).width( )/4, $( window ).height( )/4, $( window ).width( )/4 )
 		}
 		
@@ -162,19 +157,19 @@ $(function( ){
 		}
 		
 		var textures = {
-			blank: new THREE.MeshLambertMaterial( { color: colors.white, shading: THREE.SmoothShading, wireframe: false } ),
+			blank: new THREE.MeshLambertMaterial( { color: 0xFFFFFF, shading: THREE.SmoothShading, wireframe: false } ),
 			earth: new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'textures/earth.jpg' ) } )			
 		};
 		
 		// Scene Objects
 
-		var light = new THREE.PointLight( colors.red );
+		var light = new THREE.PointLight( colors.white );
 		light.position.x = -600;
 		light.position.y = 100;
 		light.position.z = 450;
 		light.intensity = 1;
 		
-		var pointLight = new THREE.PointLight( colors.blue );
+		var pointLight = new THREE.PointLight( colors.white );
 		pointLight.position.x = 600;
 		pointLight.position.y = 100;
 		pointLight.position.z = 450;
@@ -183,8 +178,7 @@ $(function( ){
 		camera = new THREE.PerspectiveCamera( cameraFieldOfView, aspectRatio, near, far );	// Create a new Camera,
 		camera.position.z = startPos.z;								// Set camera z position
 		
-		blockGeometry 	= new THREE.SphereGeometry( blockSize.x, blockSize.y, blockSize.z );		// Set block Geometry using block Dimentions
-		block 		= new THREE.Mesh( shapes.cube, textures.blank );
+		block 		= new THREE.Mesh( shapes.sphere, textures.blank );
 
 		scene = new THREE.Scene( );								// Create a new Scene
 		scene.add( block );									// Add block to the new Scene
@@ -243,24 +237,28 @@ $(function( ){
 			touch.y = event.touches.item( 0 ).clientY;
 			
 			if( event.touches.item( 0 ) ){
-				block.position.y = rendererContainer.height( )/2 - touch.y;
-				block.position.x = touch.x - rendererContainer.width( )/2;
+				block.rotation.x += .05;
+				
+				//block.position.y = rendererContainer.height( )/2 - touch.y;
+				//block.position.x = touch.x - rendererContainer.width( )/2;
 			}
 
 			if( event.touches.item( 1 ) ){
 				event.preventDefault( );
-				block.rotation.x += .05;
-				block.position.x = 0;
-				block.position.y = 0;
-				block.position.z = 100;
+				block.rotation.y += .05;
+				
+				//block.position.x = 0;
+				//block.position.y = 0;
+				//block.position.z = 100;
 			}
 			
 			if( event.touches.item( 2 ) ){
 				event.preventDefault( );
 				block.rotation.z += .05;
-				block.position.x = 0;
-				block.position.y = 0;
-				block.position.z = 100;
+				
+				//block.position.x = 0;
+				//block.position.y = 0;
+				//block.position.z = 100;
 			}
 			
 			if( event.touches.item( 3 ) ){
@@ -300,6 +298,16 @@ $(function( ){
 
 			var syncDelay = 1000 // milliseconds
 			setTimeout( function( ) {
+				client.emit( "Sync Client Camera Position", {
+					rx: camera.rotation.x,
+					ry: camera.rotation.y,
+					rz: camera.rotation.z,
+					px: camera.position.x,
+					py: camera.position.y,
+					pz: camera.position.z,
+					name: $( clientName ).html().split( ':' )[1]
+				} );
+
 				client.emit( "Sync Client Movement", {
 					rx: block.rotation.x,
 					ry: block.rotation.y,
