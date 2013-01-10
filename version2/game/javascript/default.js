@@ -118,7 +118,7 @@ $(function( ){
 	window.ontouchmove = function(){ event.preventDefault(); }; 		// No overscrolling on Touch Devices
 
 
-	var camera, scene, renderer;						// Declare Camera Variables in empty f() global scope
+	var camera, scene, renderer, projector;						// Declare Camera Variables in empty f() global scope
 	var plane, block, blockGeometry, blockMaterial, blockPosition;			// Declare block Variables in empty f() global scope
 
 	var touch = {
@@ -149,7 +149,8 @@ $(function( ){
 		// Object Settings
 
 		var shapes = {
-			sphere: new THREE.SphereGeometry( $( window ).width( )/4, 8, 8 )
+			sphere: new THREE.SphereGeometry( $( window ).width( )/4, 8, 8 ),
+			cube: new THREE.CubeGeometry( $( window ).width( )/4, $( window ).height( )/4, $( window ).width( )/4 )
 		}
 		
 		var colors = {
@@ -169,13 +170,13 @@ $(function( ){
 
 		var light = new THREE.PointLight( colors.red );
 		light.position.x = -600;
-		light.position.y = 0;
+		light.position.y = 100;
 		light.position.z = 450;
 		light.intensity = 1;
 		
 		var pointLight = new THREE.PointLight( colors.blue );
 		pointLight.position.x = 600;
-		pointLight.position.y = 0;
+		pointLight.position.y = 100;
 		pointLight.position.z = 450;
 		pointLight.intensity = 1;
 		
@@ -183,20 +184,43 @@ $(function( ){
 		camera.position.z = startPos.z;								// Set camera z position
 		
 		blockGeometry 	= new THREE.SphereGeometry( blockSize.x, blockSize.y, blockSize.z );		// Set block Geometry using block Dimentions
-		block 		= new THREE.Mesh( shapes.sphere, textures.blank );
+		block 		= new THREE.Mesh( shapes.cube, textures.blank );
 
 		scene = new THREE.Scene( );								// Create a new Scene
 		scene.add( block );									// Add block to the new Scene
 		scene.add( light );
 		scene.add( pointLight );
 
-		renderer = new THREE.CanvasRenderer();							// Create a Renderer to show the Scene
-		renderer.setSize( $(window).width(), $(window).height() );				// Set the size of the Renderer
+		renderer = new THREE.CanvasRenderer( );							// Create a Renderer to show the Scene
+		renderer.setSize( $( window ).width( ), $( window ).height( ) );				// Set the size of the Renderer
 		rendererContainer = $( '<div />' ).attr( 'id', 'renderer' )				// Create the renderer DOM object
 			.append( renderer.domElement )							// Add the Renderer to the Renderer DOM object
 			.appendTo( $( 'body') );							// Add the Renderer DOM element to the Body
 
 
+		projector = new THREE.Projector();
+		
+
+		animate( );
+		function animate( ) {
+			requestAnimationFrame( animate );
+			rotateCamera( );
+		}
+		
+		var radius = 600;
+		var theta = 0;
+
+		function rotateCamera( ) {
+			TWEEN.update();
+
+			theta += 0.1;
+
+			camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
+			camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
+			camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
+			camera.lookAt( scene.position );
+			renderer.render( scene, camera );
+		}
 
 		$( window ).resize( function( ){         
     			camera.aspect = window.innerWidth / window.innerHeight;
@@ -266,8 +290,8 @@ $(function( ){
 			touch.x = event.clientX;
 			touch.y = event.clientY;
 			
-			block.position.y = rendererContainer.height()/2 - touch.y;
-			block.position.x = touch.x - rendererContainer.width()/2;
+			//block.position.y = rendererContainer.height()/2 - touch.y;
+			//block.position.x = touch.x - rendererContainer.width()/2;
 			block.rotation.x += .03;
 			block.rotation.y += .02;
 			block.rotation.z += .01;
@@ -289,10 +313,22 @@ $(function( ){
 		};
 
 		gameboard.onclick = function ( event ) {
-			block.rotation.x = 0;
-			block.rotation.y = 0;
-			block.rotation.z = 0;
+			//block.rotation.x = 0;
+			//block.rotation.y = 0;
+			//block.rotation.z = 0;
 			
+			var vector = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1, 0.5 );
+			projector.unprojectVector( vector, camera );
+			var raycaster = new THREE.Raycaster( camera.position, vector.subSelf( camera.position ).normalize() );
+			var intersects = raycaster.intersectObjects( scene.children );
+
+			if ( intersects.length > 0 ) {
+				console.log( intersects[ 0 ].object );
+				intersects[ 0 ].object.rotation.x = 0;
+				intersects[ 0 ].object.rotation.y = 0;
+				intersects[ 0 ].object.rotation.z = 0;
+			};
+
 			renderer.render( scene, camera );
 		};
 
