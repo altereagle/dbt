@@ -1,7 +1,6 @@
 var client = io.connect('http://108.161.128.208:1111');
 
-$(function () {  
-  var clientNames;
+$(function () {
   var clientCount = $('<div />')
     .attr('id', 'clientCount')
     .addClass('ui')
@@ -13,22 +12,20 @@ $(function () {
     .addClass('ui')
     .html(navigator.platform + ':noname')
     .click(function (event) {
-    event.preventDefault();
-
-    var oldname = clientName.html().split(':')[1];;
-    var name = prompt('Change your Alias', clientName.html().split(':')[1]);
-    if (name !== null && name !== navigator.platform && name !== 'noname' && name !== '' && name !== clientName.html().split(':')[1]) {
-      clientName.html(navigator.platform + ":" + name);
-      changeAlias.send(1000,{
-	name: "message",
-        message: oldname + " is now " + name
-      });
-
-    } else {
-      printMessage({
-        message: 'Sorry, bad name, try something else'
-      });
-    };
+      event.preventDefault();
+      var oldname = clientName.html().split(':')[1];
+      var name = prompt('Change your Alias', clientName.html().split(':')[1]);
+      if (name !== null && name !== navigator.platform && name !== 'noname' && name !== '' && name !== clientName.html().split(':')[1]) {
+        clientName.html(navigator.platform + ":" + name);
+        changeAlias.send(1000,{
+          name: "message",
+          message: oldname + " is now " + name
+        });
+      } else {
+        printMessage({
+          message: 'Sorry, bad name, try something else'
+        });
+      }
   })
     .appendTo($('body'));
 
@@ -41,23 +38,23 @@ $(function () {
     pingBox.fadeTo(500, 1);
   })
     .blur(function (event) {
-    pingBox.fadeTo(1000, .1);
+    pingBox.fadeTo(1000, 0.1);
   })
     .keypress(function (event) {
-    if (event.which == 13) {
+    if (event.which === 13) {
       event.preventDefault();
-
+      
       client.emit('ping', {
         name: clientName.html(),
         message: pingBox.val()
       });
-
+      
       pingBox.val('');
     }
   })
     .appendTo($('body'));
 
-// Events
+// Page Events
 
   var welcomeMessage = new Sync( 'Welcome', {
     title:'Welcome!',
@@ -65,8 +62,8 @@ $(function () {
     callback:function(syncData){
       clientCount.html(syncData.clients);
       if(syncData.clients) return;
-
-      printMessage(syncData)
+      
+      printMessage(syncData);
     }
   }).enable().send();
   
@@ -81,34 +78,19 @@ $(function () {
     message: $(clientName).html().split(':')[1] + ' has disconnected',
     callback: function(syncData) {
       clientCount.html(syncData.clients);
-
+      
       printMessage(syncData);
     }
   }).enable();
 
-
-// Old Events
-
-/*
-  client.on('Send Player Count', function (player) {
-    clientCount.html(player.count);
-
-  client.on('ping', function (ping) {
-    printMessage(ping, 3000);
-
-  client.on('Update Player List', function (player) {
-    clientNames = player.clientNames;
-    clientCount.html(player.count);
-*/
-
   function printMessage(syncData) {
     var delay = 4000;
-    var message = syncData !== null && syncData !== undefined && syncData.message ? syncData.message : "no message";
+    var syncMessage = syncData !== null && syncData !== undefined && syncData.message ? syncData.message : "no message";
     console.log(syncData);
 
     $('.newPing').animate({
       bottom: 300,
-      opacity: .1
+      opacity: 0.1
     }, 800);
 
     $('.oldPing').fadeOut(function () {
@@ -118,62 +100,67 @@ $(function () {
     var message = $('<div />')
       .attr('id', 'pingMessage')
       .addClass('newPing')
-      .html(message)
+      .html(syncMessage)
       .appendTo($('body'));
 
     setTimeout(function () {
       message.addClass('oldPing');
       message.fadeOut(function () {
-        message.remove()
+        message.remove();
       });
     }, delay);
   }
-
-  // Render Graphics DOM Ready
+  
   window.ontouchmove = function () {
     event.preventDefault();
-  }; // No overscrolling on Touch Devices
+  }; // No overscrolling
 
+  // Main Objects
+  var camera, scene, renderer, rendererContainer, projector, block;
 
-  var camera, scene, renderer, projector; // Declare Camera Variables in empty f() global scope
-  var plane, block; // Declare block Variables in empty f() global scope
-
+  // Client Touch Position
   var touch = {
     x: null,
     y: null,
   };
 
-  gameboardInit();
-  blockControlsInit();
+  //  333  DDDD
+  //    33 DD  DD
+  //  3333 DD  DD   --- Daaanggaa zonnee!
+  //    33 DD  DD
+  //  333  DDDD
+  
+  initView();
+  initControls();
  
-  // Event Syncing
+  // Sync Client Movement Event
   var clientMovement = new Sync( 'Sync Client Movement', block ).enable();
 
-  function gameboardInit() { // Initilize Gameboard
-    var cameraFieldOfView = 45, // Set Camera  field of view,
-      aspectRatio = $(window).width() / $(window).height(), // Set aspect ratio,
-      near = 1, // Set frustum near plane,
-      far = 10000; // Set frustom far plane.
-
-    var startPos = { // Set Camera Position
-      z: 1000
-    };
-
-    // Object Settings
-
+  // Initilize hotspot
+  function initView() { 
+    
+    // Set Camera Properties
+    var cameraFieldOfView = 45, 
+      aspectRatio = $(window).width() / $(window).height(),
+      near = 1,
+      far = 10000;
+    
+    // Prefab Shapes
     var shapes = {
       sphere: new THREE.SphereGeometry($(window).width() / 8, 8, 8),
       cube: new THREE.CubeGeometry($(window).width() / 4, $(window).height() / 4, $(window).width() / 4)
-    }
+    };
 
+    // Prefab Colors
     var colors = {
       white: 0xFFFFFF,
       black: 0x000000,
       red: 0xFF0000,
       green: 0x00FF00,
       blue: 0x0000FF
-    }
+    };
 
+    // Prefab Textures
     var textures = {
       blank: new THREE.MeshLambertMaterial({
         color: 0xFFFFFF,
@@ -185,53 +172,54 @@ $(function () {
       })
     };
 
-    // Scene Objects
-
+    // Left Light
     var light = new THREE.PointLight(colors.white);
     light.position.x = -600;
     light.position.y = 100;
     light.position.z = 450;
     light.intensity = 1;
 
+    // Right Light
     var pointLight = new THREE.PointLight(colors.white);
     pointLight.position.x = 600;
     pointLight.position.y = 100;
     pointLight.position.z = 450;
     pointLight.intensity = 1;
 
-    camera = new THREE.PerspectiveCamera(cameraFieldOfView, aspectRatio, near, far); // Create a new Camera,
-    camera.position.z = startPos.z; // Set camera z position
+    // Camera
+    camera = new THREE.PerspectiveCamera(cameraFieldOfView, aspectRatio, near, far);
+    camera.position.z = 1000;
 
+    // Block
     block = new THREE.Mesh(shapes.sphere, textures.blank);
 
-    scene = new THREE.Scene(); // Create a new Scene
-    scene.add(block); // Add block to the new Scene
+    // Scene
+    scene = new THREE.Scene();
+    scene.add(block);
     scene.add(light);
     scene.add(pointLight);
 
+    // Renderer
     renderer = new THREE.CanvasRenderer(); // Create a Renderer to show the Scene
     renderer.setSize($(window).width(), $(window).height()); // Set the size of the Renderer
     rendererContainer = $('<div />').attr('id', 'renderer') // Create the renderer DOM object
     .append(renderer.domElement) // Add the Renderer to the Renderer DOM object
     .appendTo($('body')); // Add the Renderer DOM element to the Body
 
+    // Projector
     projector = new THREE.Projector();
 
-
+    // Rotate Camera
     animate();
+    var radius = 600;
+    var theta = 0;
     function animate() {
       requestAnimationFrame(animate);
       rotateCamera();
     }
-
-      var radius = 600;
-      var theta = 0;
-
     function rotateCamera() {
       TWEEN.update();
-
       theta += 0.1;
-
       camera.position.x = radius * Math.sin(THREE.Math.degToRad(theta));
       camera.position.y = radius * Math.sin(THREE.Math.degToRad(theta));
       camera.position.z = radius * Math.cos(THREE.Math.degToRad(theta));
@@ -239,160 +227,172 @@ $(function () {
       renderer.render(scene, camera);
     }
 
+    // Window resize handler
     $(window).resize(function () {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.render(scene, camera);
     });
 
-    return true; // Return true
+    // Render Scene
+    renderer.render(scene, camera);
+    // End initView
+    return true; 
   }
 
-  function blockControlsInit() {
-    renderer.render(scene, camera);
+  function initControls() {
 
-    var gameboard = rendererContainer[0];
+    // Touch/Click event hotspot
+    var hotspot = rendererContainer[0];
 
-    gameboard.ontouchmove = function (event) {
-
+    // Touch Move
+    hotspot.ontouchmove = function (event) {
+      // Assign X,Y positions
       touch.x = event.touches.item(0).clientX;
       touch.y = event.touches.item(0).clientY;
-
+      // If 1 finger is touching
       if (event.touches.item(0)) {
-        block.rotation.x += .05;
-
+        block.rotation.x += 0.05;
         block.position.y = rendererContainer.height( )/2 - touch.y;
         block.position.x = touch.x - rendererContainer.width( )/2;
       }
-
+      // If 2 fingers are touching
       if (event.touches.item(1)) {
         event.preventDefault();
-        block.rotation.y += .05;
+        block.rotation.y += 0.05;
       }
-
+      // If 3 fingers are touching
       if (event.touches.item(2)) {
         event.preventDefault();
-        block.rotation.z += .05;
+        block.rotation.z += 0.05;
       }
-
-      if (event.touches.item(3)) {
-        event.preventDefault();
-        block.rotation.z += .05;
-      }
-
+      // re-render the scene
       renderer.render(scene, camera);
-      clientMovement.send();
-    };
-
-    gameboard.onmousemove = function (event) {
-      touch.x = event.clientX;
-      touch.y = event.clientY;
-
-      block.position.y = rendererContainer.height()/2 - touch.y;
-      block.position.x = touch.x - rendererContainer.width()/2;
-      block.rotation.x += .03;
-      block.rotation.y += .02;
-      block.rotation.z += .01;
-
-      renderer.render(scene, camera);
+      // Send new position to all connected clients every 10ms
       clientMovement.send(10);
     };
 
-    gameboard.onmousedown = function (event) {
+    // Mouse Move
+    hotspot.onmousemove = function (event) {
+      // Assign X,Y positons
+      touch.x = event.clientX;
+      touch.y = event.clientY;
+      // Move the Block
+      block.position.y = rendererContainer.height()/2 - touch.y;
+      block.position.x = touch.x - rendererContainer.width()/2;
+      // Rotate while moving
+      block.rotation.x += 0.05;
+      block.rotation.y += 0.05;
+      block.rotation.z += 0.05;
+      // re-render the scene
+      renderer.render(scene, camera);
+      // Send new position to all connected clients every 10ms
+      clientMovement.send(10);
+    };
+
+    // Mouse Down
+    hotspot.onmousedown = function (event) {
+      // Not used yet, but will be. ( for selecting/clicking on 3D objects )
       var vector = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
       projector.unprojectVector(vector, camera);
       var raycaster = new THREE.Raycaster(camera.position, vector.subSelf(camera.position).normalize());
       var intersects = raycaster.intersectObjects(scene.children);
-
       if (intersects.length > 0) {
+        // Will be used later
         console.log(intersects[0].object);
+        // Resets the orientation of the block
         intersects[0].object.rotation.x = 0;
         intersects[0].object.rotation.y = 0;
         intersects[0].object.rotation.z = 0;
       }
-
+      // re-render the scene
       renderer.render(scene, camera);
-      clientMovement.send();
+      // Sends the new position to all connected clients instantly
+      clientMovement.send(0);
     };
 
-    gameboard.ontouchend = function (event) {
+    // Touch End
+    hotspot.ontouchend = function (event) {
+      // Resets the block position
       block.position.x = 0;
       block.position.y = 0;
       block.position.z = 0;
-
-      renderer.render(scene, camera);     
-      clientMovement.send();
-    }
+      // re-render the scene
+      renderer.render(scene, camera);
+      // Sends the new position to all connected clients instantly
+      clientMovement.send(0);
+    };
+    // End initControls
+    return true;
   }
 
-  function Sync(eventName, syncObject) {
+  // Sync Constructor -- TODO: long description
+  function Sync(eventName, options) {
+    // Save for chaining
     var self = this;
+    // Data Container
     var syncData = {};
-    
-    var moveable = syncObject.position !== undefined  && syncObject.rotation !== undefined ? true : false;
-    var ismessage = syncObject.message !== undefined  && syncObject.title !== undefined ? true : false;
-      
+    // Conditionals
+    var moveable = options.position !== undefined  && options.rotation !== undefined ? true : false;
+    var ismessage = options.message !== undefined  && options.title !== undefined ? true : false;
     if(moveable){    
-     // syncData.name = $(clientName).html().split(':')[1];
-      syncData.rotation = syncObject.rotation,
-      syncData.position = syncObject.position
-    };
-      
+      syncData.rotation = options.rotation;
+      syncData.position = options.position;
+    }
     if(ismessage){
-      syncData.title = syncObject.title,
-      syncData.message = syncObject.message
-    //syncData.callback = syncObject.callback
-    };     
-    
+      syncData.title = options.title;
+      syncData.message = options.message;
+    }     
+    // Event Emmiter
     self.send = function( timeout, ammendment ){
-      timeout = typeof timeout === "number" ? timeout : 500; // Default timeout to send event
+      // Timeout ( before sending data )
+      timeout = typeof timeout === "number" ? timeout : 500;
+      // Ammendment ( if data sent needs to be altered )
       if(typeof ammendment === "object" && syncData[ ammendment.name ] !== undefined){
-        syncData[ ammendment.name ] = ammendment.message
+        syncData[ ammendment.name ] = ammendment.message;
       }
-
+      // Emit event
       setTimeout(function () {
-        syncData.name = $(clientName).html().split(':')[1]; // Important for moving on one screen only
+        // Always send current client name ( This is important to distinguish event sources )
+        syncData.name = $(clientName).html().split(':')[1];
+        // Send modified syncData to the server to be sent to the client *** Security ***
         client.emit(eventName, syncData);
       }, timeout);
-
+      // Return self for chaining
       return self;
     };
 
     self.enable = function () {
+      // For Object Movement Syncing -- TODO: This can be improved...
       if (moveable) {
+        // Enable reciever for movement event
         client.on(eventName, function (syncData) {
           if (syncData.name !== $(clientName).html().split(':')[1]) {
-            syncObject.rotation.x = syncData.rotation.x;
-            syncObject.rotation.y = syncData.rotation.y;
-            syncObject.rotation.z = syncData.rotation.z;
-            
-            syncObject.position.x = syncData.position.x;
-            syncObject.position.y = syncData.position.y;
-            syncObject.position.z = syncData.position.z;
-
+            // Set Orientation
+            options.rotation.x = syncData.rotation.x;
+            options.rotation.y = syncData.rotation.y;
+            options.rotation.z = syncData.rotation.z;
+            // Set Position
+            options.position.x = syncData.position.x;
+            options.position.y = syncData.position.y;
+            options.position.z = syncData.position.z;
             renderer.render(scene, camera);
           }
         });
       }
-
-     if ( typeof syncObject.callback === "function" ) {
-       client.on(eventName, function(syncData) {
-         if(syncObject.callback){
-           syncObject.callback(syncData);
-         }
-       });
-     }
-
+      // Run callback if there is one, passing the syncData
+      if ( typeof options.callback === "function" ) {
+        client.on(eventName, function(syncData) {
+          if(options.callback){
+            options.callback(syncData);
+          }
+        });
+      }
+      // For chaining
       return self;
     };
-
-    this.off = function () {
-     if ( !validObj ) return;
-    };
-
+    // More chaining
     return self;
   }
-
 });
