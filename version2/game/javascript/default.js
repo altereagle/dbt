@@ -1,7 +1,7 @@
 var client = io.connect('http://108.161.128.208:1111');
 
-$(function () {
-  var clientNames;
+$(function () {  
+  var clientNames;
   var clientCount = $('<div />')
     .attr('id', 'clientCount')
     .addClass('ui')
@@ -15,20 +15,19 @@ $(function () {
     .click(function (event) {
     event.preventDefault();
 
-    var oldname = clientName.html();
+    var oldname = clientName.html().split(':')[1];;
     var name = prompt('Change your Alias', clientName.html().split(':')[1]);
     if (name !== null && name !== navigator.platform && name !== 'noname' && name !== '' && name !== clientName.html().split(':')[1]) {
       clientName.html(navigator.platform + ":" + name);
-
-      client.emit('Client Alias Changed', {
-        name: (clientName.html().split(":")[1]),
-        message: oldname
+      changeAlias.send(1000,{
+	name: "message",
+        message: oldname + " is now " + name
       });
+
     } else {
       printMessage({
-        name: 'server',
         message: 'Sorry, bad name, try something else'
-      }, 4000);
+      });
     };
   })
     .appendTo($('body'));
@@ -36,7 +35,7 @@ $(function () {
   var pingBox = $('<input />')
     .attr('id', 'pingBox')
     .addClass('ui')
-    .val('send message!')
+    .val('I am making updates - check back later')
     .focus(function (event) {
     pingBox.val('');
     pingBox.fadeTo(500, 1);
@@ -58,43 +57,54 @@ $(function () {
   })
     .appendTo($('body'));
 
-  client.on('welcome', function (player) {
-    printMessage(player, 1000);
+// Events
 
-    client.emit('Get Client Count', {
-      name: clientName.html(),
-      message: 'Get Client Count'
-    });
-  });
+  var welcomeMessage = new Sync( 'Welcome', {
+    title:'Welcome!',
+    message: $(clientName).html().split(':')[1] + ' has connected',
+    callback:function(syncData){
+      clientCount.html(syncData.clients);
+      if(syncData.clients) return;
 
+      printMessage(syncData)
+    }
+  }).enable().send();
+  
+  var changeAlias = new Sync ( 'Change Alias', {
+    title: 'Changed Alias',
+    message: 'message',
+    callback: printMessage
+  }).enable();
+
+  var exitMessage = new Sync( 'Goodbye', {
+    title:'Goodbye',
+    message: $(clientName).html().split(':')[1] + ' has disconnected',
+    callback: function(syncData) {
+      clientCount.html(syncData.clients);
+
+      printMessage(syncData);
+    }
+  }).enable();
+
+
+// Old Events
+
+/*
   client.on('Send Player Count', function (player) {
-    printMessage(player, 1000);
     clientCount.html(player.count);
-  });
 
   client.on('ping', function (ping) {
     printMessage(ping, 3000);
-  });
 
   client.on('Update Player List', function (player) {
-    printMessage({
-      name: "server",
-      message: player.message.split(":")[1] + " &#62;&#62;&#62; " + player.name
-    }, 4000);
     clientNames = player.clientNames;
-    console.log(clientNames);
-
     clientCount.html(player.count);
-  });
+*/
 
-  client.on('disconnected', function (player) {
-    printMessage(player, 1000);
-    clientCount.html(player.count);
-    console.log(player.count);
-  });
-
-  function printMessage(player, delay) {
-    console.log(player.message);
+  function printMessage(syncData) {
+    var delay = 4000;
+    var message = syncData !== null && syncData !== undefined && syncData.message ? syncData.message : "no message";
+    console.log(syncData);
 
     $('.newPing').animate({
       bottom: 300,
@@ -108,7 +118,7 @@ $(function () {
     var message = $('<div />')
       .attr('id', 'pingMessage')
       .addClass('newPing')
-      .html(player.name + "# " + player.message)
+      .html(message)
       .appendTo($('body'));
 
     setTimeout(function () {
@@ -135,8 +145,9 @@ $(function () {
 
   gameboardInit();
   blockControlsInit();
-  syncClientRotation();
-  syncClientCameras();
+ 
+  // Event Syncing
+  var clientMovement = new Sync( 'Sync Client Movement', block ).enable();
 
   function gameboardInit() { // Initilize Gameboard
     var cameraFieldOfView = 45, // Set Camera  field of view,
@@ -204,19 +215,17 @@ $(function () {
     .append(renderer.domElement) // Add the Renderer to the Renderer DOM object
     .appendTo($('body')); // Add the Renderer DOM element to the Body
 
-
     projector = new THREE.Projector();
 
 
     animate();
-
     function animate() {
       requestAnimationFrame(animate);
       rotateCamera();
     }
 
-    var radius = 600;
-    var theta = 0;
+      var radius = 600;
+      var theta = 0;
 
     function rotateCamera() {
       TWEEN.update();
@@ -235,6 +244,7 @@ $(function () {
       camera.updateProjectionMatrix();
 
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
     });
 
     return true; // Return true
@@ -253,26 +263,18 @@ $(function () {
       if (event.touches.item(0)) {
         block.rotation.x += .05;
 
-        //block.position.y = rendererContainer.height( )/2 - touch.y;
-        //block.position.x = touch.x - rendererContainer.width( )/2;
+        block.position.y = rendererContainer.height( )/2 - touch.y;
+        block.position.x = touch.x - rendererContainer.width( )/2;
       }
 
       if (event.touches.item(1)) {
         event.preventDefault();
         block.rotation.y += .05;
-
-        //block.position.x = 0;
-        //block.position.y = 0;
-        //block.position.z = 100;
       }
 
       if (event.touches.item(2)) {
         event.preventDefault();
         block.rotation.z += .05;
-
-        //block.position.x = 0;
-        //block.position.y = 0;
-        //block.position.z = 100;
       }
 
       if (event.touches.item(3)) {
@@ -281,66 +283,24 @@ $(function () {
       }
 
       renderer.render(scene, camera);
-
-      var syncDelay = 1000 // milliseconds
-      setTimeout(function () {
-        client.emit('Sync Client Movement', {
-          rx: block.rotation.x,
-          ry: block.rotation.y,
-          rz: block.rotation.z,
-          px: block.position.x,
-          py: block.position.y,
-          pz: block.position.z,
-          name: $(clientName).html().split(':')[1]
-        });
-      }, syncDelay);
-
+      clientMovement.send();
     };
-
 
     gameboard.onmousemove = function (event) {
       touch.x = event.clientX;
       touch.y = event.clientY;
 
-      //block.position.y = rendererContainer.height()/2 - touch.y;
-      //block.position.x = touch.x - rendererContainer.width()/2;
+      block.position.y = rendererContainer.height()/2 - touch.y;
+      block.position.x = touch.x - rendererContainer.width()/2;
       block.rotation.x += .03;
       block.rotation.y += .02;
       block.rotation.z += .01;
 
       renderer.render(scene, camera);
-
-
-      client.on('Sync Client Movement', function (playerblock) {
-        if (playerblock.name !== $(clientName).html().split(':')[1]) {
-          block.rotation.x = playerblock.rx;
-          block.rotation.y = playerblock.ry;
-          block.rotation.z = playerblock.rz;
-          block.position.x = playerblock.px;
-          block.position.y = playerblock.py;
-          block.position.z = playerblock.pz;
-          renderer.render(scene, camera);
-        }
-      });
-      var syncDelay = 1000 // milliseconds
-      setTimeout(function () {
-        client.emit("Sync Client Movement", {
-          rx: block.rotation.x,
-          ry: block.rotation.y,
-          rz: block.rotation.z,
-          px: block.position.x,
-          py: block.position.y,
-          pz: block.position.z,
-          name: $(clientName).html().split(':')[1]
-        });
-      }, syncDelay);
+      clientMovement.send(10);
     };
 
-    gameboard.onclick = function (event) {
-      //block.rotation.x = 0;
-      //block.rotation.y = 0;
-      //block.rotation.z = 0;
-
+    gameboard.onmousedown = function (event) {
       var vector = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
       projector.unprojectVector(vector, camera);
       var raycaster = new THREE.Raycaster(camera.position, vector.subSelf(camera.position).normalize());
@@ -354,86 +314,85 @@ $(function () {
       }
 
       renderer.render(scene, camera);
+      clientMovement.send();
     };
 
     gameboard.ontouchend = function (event) {
       block.position.x = 0;
       block.position.y = 0;
       block.position.z = 0;
-      renderer.render(scene, camera);
+
+      renderer.render(scene, camera);     
+      clientMovement.send();
     }
   }
 
   function Sync(eventName, syncObject) {
     var self = this;
-    var validObj = syncObject.position && syncObject.rotation ? true : false;
-
-    this.send = function (timeout) {
-      if (!validObj) return;
-
-      timeout = typeof timeout === "number" ? timeout : 1000; // Default poll time is 1 second
+    var syncData = {};
+    
+    var moveable = syncObject.position !== undefined  && syncObject.rotation !== undefined ? true : false;
+    var ismessage = syncObject.message !== undefined  && syncObject.title !== undefined ? true : false;
+      
+    if(moveable){    
+     // syncData.name = $(clientName).html().split(':')[1];
+      syncData.rotation = syncObject.rotation,
+      syncData.position = syncObject.position
+    };
+      
+    if(ismessage){
+      syncData.title = syncObject.title,
+      syncData.message = syncObject.message
+    //syncData.callback = syncObject.callback
+    };     
+    
+    self.send = function( timeout, ammendment ){
+      timeout = typeof timeout === "number" ? timeout : 500; // Default timeout to send event
+      if(typeof ammendment === "object" && syncData[ ammendment.name ] !== undefined){
+        syncData[ ammendment.name ] = ammendment.message
+      }
 
       setTimeout(function () {
-        client.emit(eventName, {
-          px: syncObject.position.x,
-          py: syncObject.position.y,
-          pz: syncObject.position.z,
-          rx: syncObject.rotation.x,
-          ry: syncObject.rotation.y,
-          rz: syncObject.rotation.z,
-          name: $(clientName).html().split(':')[1]
-        });
+        syncData.name = $(clientName).html().split(':')[1]; // Important for moving on one screen only
+        client.emit(eventName, syncData);
       }, timeout);
 
       return self;
     };
 
-    this.recieve = function () {
-      if (!validObj) return;
-
-      if (syncObject.position && syncObject.rotation) {
-        client.on(eventName, function (data) {
-          if (data.name !== $(clientName).html().split(':')[1]) {
-            syncObject.rotation.x = data.rx;
-            syncObject.rotation.y = data.ry;
-            syncObject.rotation.z = data.rz;
-            syncObject.position.x = data.px;
-            syncObject.position.y = data.py;
-            syncObject.position.z = data.pz;
+    self.enable = function () {
+      if (moveable) {
+        client.on(eventName, function (syncData) {
+          if (syncData.name !== $(clientName).html().split(':')[1]) {
+            syncObject.rotation.x = syncData.rotation.x;
+            syncObject.rotation.y = syncData.rotation.y;
+            syncObject.rotation.z = syncData.rotation.z;
+            
+            syncObject.position.x = syncData.position.x;
+            syncObject.position.y = syncData.position.y;
+            syncObject.position.z = syncData.position.z;
 
             renderer.render(scene, camera);
           }
         });
       }
 
+     if ( typeof syncObject.callback === "function" ) {
+       client.on(eventName, function(syncData) {
+         if(syncObject.callback){
+           syncObject.callback(syncData);
+         }
+       });
+     }
+
       return self;
     };
 
+    this.off = function () {
+     if ( !validObj ) return;
+    };
+
+    return self;
   }
 
-  function syncClientCameras() {
-    // Sync Client Camera Position every 2 seconds
-    setTimeout(function () {
-      client.emit("Sync Client Camera Position", {
-        rx: camera.rotation.x,
-        ry: camera.rotation.y,
-        rz: camera.rotation.z,
-        px: camera.position.x,
-        py: camera.position.y,
-        pz: camera.position.z,
-        name: $(clientName).html().split(':')[1]
-      });
-    }, 2000);
-
-    client.on('Sync Client Camera Position', function (cam) {
-      camera.rotation.x = cam.rx;
-      camera.rotation.y = cam.ry;
-      camera.rotation.z = cam.rz;
-      camera.position.x = cam.px;
-      camera.position.y = cam.py;
-      camera.position.z = cam.pz;
-    });
-
-
-  }
 });

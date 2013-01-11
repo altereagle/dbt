@@ -10,87 +10,57 @@ var server = connect( )
 var clients = socketio.listen( server );
 var clientNames = [];
 var clientCount = 0;
+var clientEvents = {};
+var clientEventNames = [
+	'Welcome',
+	'Goodbye',
+	'Change Alias',
+	'Sync Client Movement'
+];
 
 clients.sockets.on( 'connection', function( client ){
 	clientCount += 1;
+	console.log( 'CLIENT CONNECTED # ' + clientCount );
 	
-	client.emit( 'welcome', { 
-		message: 'Welcome to the game!',
-		name: 'server',
-		count: clientCount
-	} );
-    
-	client.on( 'disconnect', function( player ){
+	for( var i=0; i < clientEventNames.length; i++ ){
+		clientEvents[ clientEventNames[i] ] = new SyncEventManager( clientEventNames[i] ).sync( )
+	}
+
+	client.on( 'disconnect', function( socketEnd ){
 		clientCount -= 1;
-		clients.sockets.emit( 'disconnected', { 
-			message: 'A player has left!',
-			name: 'server',
-			count: clientCount
-		} );
-	} );
-	
-	client.on( 'Get Client Count', function( player ){
-		clients.sockets.emit( 'Send Player Count', {
-			message: 'Connected Clients =' + clientCount,
-			name: 'server',
-			clientNames: clientNames,
-			count: clientCount
-		} );
+		console.log( 'CLIENT DISCONNECTED # ' + clientCount );
+
+		clientEvents[ clientEventNames[ 1 ] ].send({ 
+			title: clientEventNames[ 1 ],
+			message: "A client has disconnected",
+			clients: clientCount
+		});	
 	} );
 
-	client.on( 'Client Alias Changed', function( player ){
-		clientNames.push( player.name );
-
-		clients.sockets.emit( 'Update Player List', {
-			message: player.message,
-			name: player.name,
-			clientNames: clientNames
-		} );
+	client.on( clientEventNames[ 0 ], function( syncData ){
+		syncData.clients = clientCount;
+		clientEvents[ clientEventNames[ 0 ] ].send(syncData);
+	} );
+	client.on( clientEventNames[ 1 ], function( syncData ){
+		syncData.clients = clientCount;
+		clientEvents[ clientEventNames[ 1] ].send(syncData);
 	} );
 
-    /*
-	client.on( 'Sync Client Movement', function ( block ){
-		clients.sockets.emit( 'Sync Client Movement', {
-			rx: block.rx,
-			ry: block.ry,
-			rz: block.rz,
-			px: block.px,
-			py: block.py,
-			pz: block.pz,
-			name: block.name
-		} );
-	} );
-    */
-
-	clients.sockets.emit( 'connected', {
-		message: 'A player has joined!',
-		name: 'server'
-	} );
-    
-    var syncMovementPosition = new SyncEventManager( 'Sync Client Movement' ).sync( );
-    var pingManager = new SyncEventManager( 'ping' ).sync( );
-    
-    function SyncEventManager( eventName, eventType ) {
+    function SyncEventManager( eventName ) {
         var self = this;
         
-        this.send = function ( message ){
-            message = message !== undefined ? message : null;
-            client.sockets.emit( eventName, {
-                message: message    
-            } );
+        self.send = function ( syncData ){
+            syncData = syncData !== undefined ? syncData : null;
+	    
+	    clients.sockets.emit( eventName, syncData );
+	    return self;
         };
-        this.sync = function ( ){
-            client.on( eventName, function ( data ){
-                if( data ) {
-                    clients.sockets.emit( eventName, {
-                        client: data
-                    } );
-                }
+        self.sync = function ( ){
+            client.on( eventName, function ( syncData ){
+		clients.sockets.emit( eventName, syncData );
             } );
-            
             return self;
         };
-        
         return self;
     }    
 } );
