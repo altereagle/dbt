@@ -1,6 +1,8 @@
 node_modules/
 .c9revisions/
 .c9revisions/*.*
+three.js/
+
 # Ignore configuration files that may contain sensitive information.
 sites/*/*settings*.php
 
