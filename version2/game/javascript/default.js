@@ -80,7 +80,7 @@ $( function( ) {
 		
 		clientCount.html( player.count );
 	} );
-
+    
 	client.on( 'disconnected', function( player ){
 		printMessage( player, 1000 );
 		clientCount.html( player.count );
@@ -110,11 +110,8 @@ $( function( ) {
 			message.fadeOut( function(){ message.remove( ) } );
 		}, delay );
 	}
-
-} );
-
+    
 					// Render Graphics DOM Ready
-$(function( ){
 	window.ontouchmove = function(){ event.preventDefault(); }; 		// No overscrolling on Touch Devices
 
 
@@ -126,17 +123,17 @@ $(function( ){
 		y: null,
 	};
 
-	gameboardInit( );							// Create a Camera and Scene with a block in it.
-	blockControlsInit( );							// Set up block controls
-	syncPlayers( );
+	gameboardInit( );
+	blockControlsInit( );
+    syncClientRotation( );
+	syncClientCameras( );
 
 	function gameboardInit( ){						// Initilize Gameboard
-
-		var cameraFieldOfView = 45,					// Set Camera  field of view,
+        var cameraFieldOfView = 45,					// Set Camera  field of view,
 		aspectRatio 	= $( window ).width( ) / $( window ).height( ), // Set aspect ratio,
 		near 		= 1,						// Set frustum near plane,
 		far 		= 10000;					// Set frustom far plane.
-
+        
 		var startPos 	= { 						// Set Camera Position
 			z: 1000
 		};
@@ -296,18 +293,20 @@ $(function( ){
 
 			renderer.render( scene, camera );
 
+
+            client.on( 'Sync Client Movement', function( playerblock ) {
+                if( playerblock.name !== $( clientName ).html().split( ':' )[1] ) {
+                    block.rotation.x = playerblock.rx;
+                    block.rotation.y = playerblock.ry;
+                    block.rotation.z = playerblock.rz;
+                    block.position.x = playerblock.px;
+                    block.position.y = playerblock.py;
+                    block.position.z = playerblock.pz;
+                    renderer.render( scene, camera );
+                }
+            } );
 			var syncDelay = 1000 // milliseconds
 			setTimeout( function( ) {
-				client.emit( "Sync Client Camera Position", {
-					rx: camera.rotation.x,
-					ry: camera.rotation.y,
-					rz: camera.rotation.z,
-					px: camera.position.x,
-					py: camera.position.y,
-					pz: camera.position.z,
-					name: $( clientName ).html().split( ':' )[1]
-				} );
-
 				client.emit( "Sync Client Movement", {
 					rx: block.rotation.x,
 					ry: block.rotation.y,
@@ -335,7 +334,7 @@ $(function( ){
 				intersects[ 0 ].object.rotation.x = 0;
 				intersects[ 0 ].object.rotation.y = 0;
 				intersects[ 0 ].object.rotation.z = 0;
-			};
+			}
 
 			renderer.render( scene, camera );
 		};
@@ -348,17 +347,76 @@ $(function( ){
 		}
 	}
 
-	function syncPlayers( ){
-		client.on( 'Sync Client Movement', function( playerblock ) {
-			if( playerblock.name !== $( clientName ).html().split( ':' )[1] ) {
-				block.rotation.x = playerblock.rx;
-				block.rotation.y = playerblock.ry;
-				block.rotation.z = playerblock.rz;
-				block.position.x = playerblock.px;
-				block.position.y = playerblock.py;
-				block.position.z = playerblock.pz;
-				renderer.render( scene, camera );
-			}
-		} );
+    function Sync( eventName, syncObject ){
+        var self = this;
+        var validObj = syncObject.position && syncObject.rotation ? true: false;
+        
+        this.send = function( timeout ){
+            if(!validObj) return;
+            
+            timeout = typeof timeout === "number" ? timeout : 1000; // Default poll time is 1 second
+            
+            setTimeout( function( ) {
+                client.emit( eventName , {
+                    px: syncObject.position.x,
+                    py: syncObject.position.y,
+                    pz: syncObject.position.z,
+                    rx: syncObject.rotation.x,
+                    ry: syncObject.rotation.y,
+                    rz: syncObject.rotation.z,
+                    name: $( clientName ).html().split( ':' )[1]
+                } );
+            }, timeout);
+            
+            return self;
+        };
+        
+        this.recieve = function( ){
+            if(!validObj) return;
+            
+            if( syncObject.position && syncObject.rotation ){
+                client.on( eventName, function( data ) {
+                    if( data.name !== $( clientName ).html().split( ':' )[1] ) {
+                        syncObject.rotation.x = data.rx;
+                        syncObject.rotation.y = data.ry;
+                        syncObject.rotation.z = data.rz;
+                        syncObject.position.x = data.px;
+                        syncObject.position.y = data.py;
+                        syncObject.position.z = data.pz;
+                        
+                        renderer.render( scene, camera );
+                    }
+                } );
+            }
+            
+            return self;
+        };
+        
+    }
+    
+	function syncClientCameras( ){
+        // Sync Client Camera Position every 2 seconds
+        setTimeout(function() {
+            client.emit( "Sync Client Camera Position", {
+                rx: camera.rotation.x,
+				ry: camera.rotation.y,
+				rz: camera.rotation.z,
+				px: camera.position.x,
+				py: camera.position.y,
+				pz: camera.position.z,
+				name: $( clientName ).html().split( ':' )[1]
+            } );
+        }, 2000);
+        
+        client.on( 'Sync Client Camera Position', function( cam ){
+            camera.rotation.x = cam.rx;
+            camera.rotation.y = cam.ry;
+            camera.rotation.z = cam.rz;
+            camera.position.x = cam.px;
+            camera.position.y = cam.py;
+            camera.position.z = cam.pz;
+        });
+        
+        
 	}
 });

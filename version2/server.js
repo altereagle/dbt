@@ -19,22 +19,13 @@ clients.sockets.on( 'connection', function( client ){
 		name: 'server',
 		count: clientCount
 	} );
-	
-
-
+    
 	client.on( 'disconnect', function( player ){
 		clientCount -= 1;
 		clients.sockets.emit( 'disconnected', { 
 			message: 'A player has left!',
 			name: 'server',
 			count: clientCount
-		} );
-	} );
-
-	client.on( 'ping', function( player ){
-		clients.sockets.emit( 'ping', { 
-			message: player.message, 
-			name: player.name
 		} );
 	} );
 	
@@ -57,6 +48,7 @@ clients.sockets.on( 'connection', function( client ){
 		} );
 	} );
 
+    /*
 	client.on( 'Sync Client Movement', function ( block ){
 		clients.sockets.emit( 'Sync Client Movement', {
 			rx: block.rx,
@@ -68,12 +60,39 @@ clients.sockets.on( 'connection', function( client ){
 			name: block.name
 		} );
 	} );
+    */
 
 	clients.sockets.emit( 'connected', {
 		message: 'A player has joined!',
 		name: 'server'
 	} );
-	
+    
+    var syncMovementPosition = new SyncEventManager( 'Sync Client Movement' ).sync( );
+    var pingManager = new SyncEventManager( 'ping' ).sync( );
+    
+    function SyncEventManager( eventName, eventType ) {
+        var self = this;
+        
+        this.send = function ( message ){
+            message = message !== undefined ? message : null;
+            client.sockets.emit( eventName, {
+                message: message    
+            } );
+        };
+        this.sync = function ( ){
+            client.on( eventName, function ( data ){
+                if( data ) {
+                    clients.sockets.emit( eventName, {
+                        client: data
+                    } );
+                }
+            } );
+            
+            return self;
+        };
+        
+        return self;
+    }    
 } );
 
 console.log( 'Server Started' );
