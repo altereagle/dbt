@@ -11,6 +11,7 @@ body
     height: 100%;
     width: 100%;
     font-family: 'eightbit';
+    text-shadow: 0 1px 5px #000;
 
     background-image: url( '../textures/grid.png' );
     background-color: #fff;
