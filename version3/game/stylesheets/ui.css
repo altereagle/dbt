@@ -1,0 +1,44 @@
+.ui {
+	z-index: 999;
+	position: fixed;
+	padding: 5px;
+}
+
+#pingMessage {
+	z-index: 999;
+	position: fixed;
+	color: #0f0;
+	font-size: 1em;
+	height: 30px;
+	bottom: 50px;
+	left: 5%;
+}
+
+#clientName {
+	top: 10px;
+	right: 10px;
+	color: #0f0;
+	background-color: #000;
+}
+#clientCount {
+	top: 10px;
+	left: 10px;
+	color: #0f0;
+	background-color: #000;
+}
+
+#pingBox {
+	bottom: 10px;
+	left: 5%;
+	height: 40px;
+	width: 90%;
+
+	font-family: 'eightbit';
+	font-size: 1em;
+
+	opacity: .9;
+	color: #0f0;
+	background-color: #000;
+	border: 0px;
+	border-radius: 0;
+}
