@@ -19,6 +19,8 @@
 	right: 10px;
 	color: #0f0;
 	background-color: #000;
+	
+	cursor: pointer;
 }
 #clientCount {
 	top: 10px;
