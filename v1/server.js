@@ -1,5 +1,5 @@
 var socketio 	= require( 'socket.io' );
-var port 	= 1111;
+var port 	= 4001;
 var connect = require( 'connect' );
 
 var server = connect( )

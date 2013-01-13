@@ -1,6 +1,6 @@
 var socketio = require( 'socket.io' );
 var connect = require( 'connect' );
-var port    = 1111;
+var port    = 4003;
 
 var server = connect( )
 	.use( connect.static( 'game' ) )
