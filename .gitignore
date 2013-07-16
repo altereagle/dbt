@@ -1,3 +1,5 @@
+.idea/
+.DS_store/
 node_modules/
 .c9revisions/
 .c9revisions/*.*
