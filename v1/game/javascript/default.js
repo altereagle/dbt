@@ -1,4 +1,4 @@
-var client = io.connect( 'http://108.161.128.208:4001' );
+var client = io.connect( 'http://108.161.128.208:5678' );
 
 $( function( ) {
 

@@ -2,7 +2,7 @@
 var connect = require('connect');
 var io = require('socket.io');
 
-var c9Port = 3000;
+var c9Port = 5678;
 
 var server = connect()
     .use(connect.static('game'))
