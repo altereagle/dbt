@@ -1,4 +1,7 @@
 var client = io.connect(window.location.origin);
+//var client = io.connect('http://108.161.128.208:5678');
+
+
 var sounds = [
   new Audio("../sounds/bass.ogg"),
   new Audio("../sounds/cym.ogg"),
@@ -9,11 +12,7 @@ sounds[0].loop = true;
 sounds[1].loop = true;
 sounds[2].loop = true;
 sounds[3].loop = true;
-//sounds[3].play();
-
-sounds[3].addEventListener('progress', function(e){
-  console.log(e);
-});
+sounds[3].play();
 
 //sounds[0].play();
 //sounds[1].play();
@@ -21,62 +20,51 @@ sounds[3].addEventListener('progress', function(e){
 sounds[0].volume = 1;
 sounds[1].volume = 0;
 sounds[2].volume = 0;
-
-var playingTracks = 1;
-var songInterval;
-
-var url = "../sounds/chiptune.ogg";
-var myAudioBuffer;
-function loadSound(url) {
-  var request = new XMLHttpRequest();
-  request.open('GET', url, true);
-  request.responseType = 'arraybuffer';
-  // . . . step 3 code above this line, step 4 code below
-  request.onload = function() {
-    context.decodeAudioData(request.response, function(buffer) {
-      myAudioBuffer = buffer;
-      console.log(buffer)
-    });
-  };
-  request.send();
-}
-
-updateTracks();
-function updateTracks(){
-  window.clearInterval(songInterval);
-  songInterval = setInterval(function(){
-    console.log(playingTracks);
-    if(playingTracks === 1){
-      sounds[0].volume = 1;
-      sounds[1].volume = 0;
-      sounds[2].volume = 0;
-      console.log('One should be playing...')
-    }
-
-    if(playingTracks === 2){
-      sounds[0].volume = 1;
-      sounds[1].volume = 1;
-      sounds[2].volume = 0;
-      console.log('Two should be playing...')
-    }
-
-    if(playingTracks === 3){
-      sounds[0].volume = 1;
-      sounds[1].volume = 1;
-      sounds[2].volume = 1;
-      console.log('Three should be playing...')
-    }
-  },8200);
-}
+sounds[3].volume = 0.1;
 
 $( function( ) {
+  var app = $('body');
+  var stars = $('<div></div>')
+    .addClass('stars')
+    .appendTo(app);
 
-	//var client = io.connect( 'http://108.161.128.208:1111' );
+  var instructions = $("<div></div>")
+    .attr( "id", "instructions" )
+    .append(
+      $("<div></div>")
+        .addClass('title')
+        .html('硬貨を指ではじく')
+    )
+    .append(
+      $("<div></div>")
+        .addClass('smallWords')
+        .html('For Play: Click \"noname\" for change and see other players move coin!')
+    )
+    .append(
+      $("<div></div>")
+        .addClass('go')
+        .html('クリックしたときに準備ができて')
+    )
+    .click(function(){
+      $(this).hide();
+    })
+    .appendTo(app);
+
+  var blinkReady = setInterval(function(){
+    instructions.find('.go').hide();
+    setTimeout(function(){
+      instructions.find('.go').show();
+    },1000);
+  },2000);
+
+  setTimeout(function(){
+    //instructions.fadeOut();
+  },20000);
 	var playerList;
 	var playerCount = $( '<div />' )
 		.attr( 'id', 'playerCount' )
 		.addClass( 'ui' )
-		.appendTo( $( 'body' ) );
+		.appendTo( app );
 
 	var playerName = $( '<div />' )
 		.attr( 'type', 'text' )
@@ -99,12 +87,12 @@ $( function( ) {
 				printPing( {name: 'server', message:'Sorry, bad name, try something else'}, 4000 );
 			};
 		} )
-		.appendTo( $( 'body' ) );
+		.appendTo( app );
 		
 	var pingBox = $( '<input />' )
 		.attr( 'id', 'pingBox' )
 		.addClass( 'ui' )
-		.val( 'send message!' )
+		.val( 'チャットメッセージ' + ' for talking!' )
 		.focus( function( event ) {
 			pingBox.val( '' );
 			pingBox.fadeTo( 500, 1 );
@@ -124,7 +112,7 @@ $( function( ) {
 				pingBox.val( '' );
   			}
 		} )
-		.appendTo( $( 'body' ) );
+		.appendTo( app );
 
 	client.on( 'welcome',  function( player ){		
 		printPing( player, 1000 );
@@ -138,9 +126,6 @@ $( function( ) {
 	client.on( 'Update Player Count', function( player ){
 		printPing( player, 1000 );
 		playerCount.html( player.count );
-    playingTracks = player.count;
-    updateTracks();
-    console.log('There should be', playingTracks, 'tracks playing.');
 	} );
 
 	client.on( 'ping', function( player ){
@@ -151,18 +136,13 @@ $( function( ) {
 		printPing( { name: "server", message: player.message.split( ":" )[1] + " &#62;&#62;&#62; " + player.name }, 4000 );
 		playerList = player.playerList;
 		console.log( playerList );
-		
 		playerCount.html( player.count );
-
-    playingTracks = player.count;
-    updateTracks();
 	} );
 
 	client.on( 'disconnected', function( player ){
 		printPing( player, 1000 );
 		playerCount.html( player.count );
     playingTracks = player.count;
-    updateTracks();
 	} );
 
 	function printPing( player, delay ) {
@@ -181,7 +161,7 @@ $( function( ) {
 			.attr( 'id', 'pingMessage' )
 			.addClass( 'newPing' )
 			.html( player.name + "# " + player.message )
-			.appendTo( $( 'body' ) );
+			.appendTo( app );
 		
 		setTimeout( function( ){
 			message.addClass( 'oldPing' );

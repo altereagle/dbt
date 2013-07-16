@@ -5,17 +5,58 @@
   src: local('Press Start 2P'), local('PressStart2P-Regular'), url(http://themes.googleusercontent.com/static/fonts/pressstart2p/v1/8Lg6LX8-ntOHUQnvQ0E7o2jf3WypfQQP02nP_ZmoBRo.woff) format('woff');
 }
 
-body
-{
-    margin:0px;    
-    height: 100%;
-    width: 100%;
+body{
+  margin:0px;
+  height: 100%;
+  width: 100%;
   background-color: #000;
-    font-family: 'eightbit';
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  font-family: 'eightbit';
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  overflow: hidden;
 }
+
+.stars {
+  z-index: -1;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-repeat: repeat-x;
+  background-image: url('../img/stars.gif');
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+#instructions {
+  cursor: pointer;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 2.5%;
+  width: 90%;
+  padding: 2.5%;
+  text-align: center;
+  color: #0f0;
+}
+  #instructions > .title {
+    font-size: 6em;
+    font-weight: bold;
+    text-shadow: 3px 0 0 #a00;
+    line-height: 120%;
+  }
+  #instructions > .smallWords {
+    margin-top: 40px;
+    font-size: 1em;
+    color: #000;
+    background-color: #0f0;
+    line-height: 200%;
+  }
+  #instructions > .go {
+    margin-top: 20px;
+    font-size: 2em;
+    text-shadow: 2px 0 0 #a00;
+  }

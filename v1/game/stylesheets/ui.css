@@ -15,11 +15,13 @@
 }
 
 #playerName {
+  cursor: pointer;
 	top: 10px;
 	right: 10px;
 	color: #0f0;
 }
 #playerCount {
+  cursor: help;
 	top: 10px;
 	left: 10px;
 	color: #0f0;
