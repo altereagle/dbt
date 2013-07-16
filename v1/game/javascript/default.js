@@ -68,7 +68,6 @@ function updateTracks(){
     }
   },8200);
 }
->>>>>>> 6672121496c8367dee37d79d775d63822097df86
 
 $( function( ) {
 
