@@ -210,15 +210,15 @@ $(function( ){
 		var lightSettings = {
 			x: 0,
 			y: 0,
-			z: 800,
+			z: 300,
 			color: 0xFFFFFF,
 			intensity: 1
 		};
 
 		var pointLightSettings = {
-			x: 200,
-			y: 0,
-			z: -800,
+			x: 0,
+			y: 100,
+			z: -300,
 			color: 0xFFFFFF,
 			intensity: 1
 		};
@@ -373,7 +373,7 @@ $(function( ){
     coin.add(coin_cap_top);
     coin.add(coin_cap_bottom);
 
-    coin.position.z = 700;
+    coin.position.z = 200;
     scene.add(coin);
     return true;										// Return true
 	}
@@ -450,9 +450,6 @@ $(function( ){
 			
 			coin.position.y = rendererContainer.height()/2 - touch.y;
 			coin.position.x = touch.x - rendererContainer.width()/2;
-			coin.rotation.x += .05;
-			coin.rotation.y += .05;
-			coin.rotation.z += .06;
 
 			renderer.render( scene, camera );
 
@@ -484,7 +481,15 @@ $(function( ){
 			coin.position.z = 0;
 			renderer.render( scene, camera );
 		}
+    setInterval(rotateCoin, 33);
 	}
+
+  function rotateCoin(){
+    coin.rotation.x += .01;
+    coin.rotation.y += .01;
+    coin.rotation.z += .01;
+    renderer.render( scene, camera );
+  }
 
 	function syncPlayers( ){
 		client.on( 'Sync Tank Movement', function( player ) {

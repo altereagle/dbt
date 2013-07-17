@@ -45,7 +45,7 @@ body{
   #instructions > .title {
     font-size: 6em;
     font-weight: bold;
-    text-shadow: 3px 0 0 #a00;
+    text-shadow: 3px 0 0 rgba(255,0,0,0.5);
     line-height: 120%;
   }
   #instructions > .smallWords {
@@ -54,9 +54,11 @@ body{
     color: #000;
     background-color: #0f0;
     line-height: 200%;
+    text-shadow: 1px 0 0 rgba(255,0,0,0.5);
+    box-shadow: 2px 2px 0 0 rgba(255,0,0,0.25);
   }
   #instructions > .go {
     margin-top: 20px;
     font-size: 2em;
-    text-shadow: 2px 0 0 #a00;
+    text-shadow: 2px 0 0 rgba(255,0,0,0.5);
   }
